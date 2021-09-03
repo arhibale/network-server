@@ -1,13 +1,14 @@
-package ru.geekbrains.server.SQL;
+package ru.geekbrains.server.SQL.impl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.geekbrains.server.User;
+import ru.geekbrains.server.SQL.SQLConnection;
+import ru.geekbrains.server.model.User;
 
 import java.sql.*;
 import java.util.Arrays;
 
-public class PostgresSQLConnection implements SQLConnection{
+public class PostgresSQLConnection implements SQLConnection {
     private static final Logger LOG = LogManager.getLogger(PostgresSQLConnection.class.getName());
 
     static {
@@ -30,7 +31,7 @@ public class PostgresSQLConnection implements SQLConnection{
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 if (!resultSet.getString("login").isEmpty()) {
-                    LOG.info("Добавление пользователя {} в память...", login);
+                    LOG.info("Добавление пользователя {}...", login);
                     user = new User(
                             resultSet.getString("login"),
                             resultSet.getString("pass"),
@@ -66,7 +67,10 @@ public class PostgresSQLConnection implements SQLConnection{
         try {
             LOG.info("Подключение БД...");
             postgresConnection = DriverManager.
-                    getConnection("jdbc:postgresql://localhost:5432/chat", "postgres", "DZXdR8Vqc6");
+                    getConnection("jdbc:postgresql://localhost:5432/test?currentSchema=network-chat"
+                            , "postgres"
+                            , "DZXdR8Vqc6");
+            LOG.info("Успешно!");
         } catch (SQLException e) {
             LOG.fatal("Непредвиденная ошибка! {}", e.getMessage());
             LOG.fatal(Arrays.toString(e.getStackTrace()));

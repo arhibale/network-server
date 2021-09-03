@@ -1,7 +1,9 @@
-package ru.geekbrains.server;
+package ru.geekbrains.server.handlers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.geekbrains.server.Server;
+import ru.geekbrains.server.config.Commands;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -25,6 +27,7 @@ public class ClientHandler {
 
     public ClientHandler(Socket socket) {
         try {
+            this.server = Server.getServer();
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
@@ -57,24 +60,24 @@ public class ClientHandler {
         LOG.info("Авторизация пользователя...");
         while(true) {
             String str = in.readUTF();
-            if (str.startsWith("/auth")) {
+            if (str.startsWith("/" + Commands.AUTH)) {
                 String[] parts = str.split(" ");
                 String login = parts[1];
                 String password = parts[2];
                 String nick = server.getAuthService().getNickByLoginPass(login, password);
                 if (nick != null) {
                     if (!server.isNickBusy(nick)) {
-                        sendMsg("/authok " + nick);
+                        sendMsg("/" + Commands.AUTHOK + " " + nick);
                         name = nick;
                         server.broadcastMsg(name + " вошёл в чат.");
                         server.subscribe(this);
                         LOG.info("Пользователь авторизовался под логином: {}, никнейм: {}", login, name);
                         return;
                     } else {
-                        sendMsg("/warn:Учётная запись уже используеться.");
+                        sendMsg(String.format("/%s:Учётная запись уже используеться.", Commands.WARN));
                     }
                 } else {
-                    sendMsg("/warn:Неверные логин/пароль.");
+                    sendMsg(String.format("/%s:Неверные логин/пароль.", Commands.WARN));
                 }
             } else {
                 sendMsg("Перед тем как отправлять сообщения авторизуйтесь!");
@@ -87,7 +90,7 @@ public class ClientHandler {
             String strFromClient = in.readUTF();
             LOG.info("Пользователь {} отправил сообщение: {}", name, strFromClient);
             if (strFromClient.startsWith("/")) {
-                if (strFromClient.equals("/end")) {
+                if (strFromClient.equals("/" + Commands.END)) {
                     return;
                 } else {
                     commands(strFromClient);
@@ -108,25 +111,25 @@ public class ClientHandler {
     }
 
     private void commands(String strFromClient) throws IOException {
-        if (strFromClient.startsWith("/w")) {
+        if (strFromClient.startsWith("/" + Commands.PM)) {
             String[] str = strFromClient.split(" ");
             String nick = str[1];
             String msg = strFromClient.substring(4 + nick.length());
             server.msgForNick(this, msg, nick);
             return;
         }
-        if (strFromClient.startsWith("/nn")) {
+        if (strFromClient.startsWith("/" + Commands.NN)) {
             newNickForUser(strFromClient);
             return;
         }
-        if (strFromClient.startsWith("/clients")) {
+        if (strFromClient.startsWith("/" + Commands.CLIENTS)) {
             server.broadcastClientList();
             return;
         }
-        if (strFromClient.startsWith("/info")) {
-            sendMsg("Приватное сообщение: «/w nick msg»\n" +
-                    "Смена никнейма: «/nn pass newNick»\n" +
-                    "Выйти из чата: /end");
+        if (strFromClient.startsWith("/" + Commands.INFO)) {
+            sendMsg("Приватное сообщение: «/PM nick msg»\n" +
+                    "Смена никнейма: «/NN pass newNick»\n" +
+                    "Выйти из чата: /END");
         }
     }
 
@@ -139,7 +142,7 @@ public class ClientHandler {
         String newNick = str[2];
         if (server.getAuthService().changeOfNickname(newNick, pass)) {
             server.broadcastMsg(name + " поменял никнейм на: " + newNick);
-            out.writeUTF("/nn " + newNick);
+            out.writeUTF("/" + Commands.NN + " " + newNick);
             LOG.info("Смена никнейма у пользователя {} на новый {}", name, newNick);
             name = newNick;
         }
@@ -150,15 +153,7 @@ public class ClientHandler {
         server.broadcastMsg(name + " вышел из чата.");
         try {
             in.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();

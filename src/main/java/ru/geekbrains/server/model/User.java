@@ -1,8 +1,9 @@
-package ru.geekbrains.server;
+package ru.geekbrains.server.model;
 
 public class User {
+
     private final String login;
-    private String password;
+    private final String password;
     private String nick;
 
     public User(String login, String password, String nick) {
@@ -17,10 +18,6 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getNick() {

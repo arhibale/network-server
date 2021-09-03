@@ -1,10 +1,10 @@
 package ru.geekbrains.server.service;
 
-import ru.geekbrains.server.SQL.PostgresSQLConnection;
+import ru.geekbrains.server.SQL.impl.PostgresSQLConnection;
 
 public class BaseAuthService implements AuthService {
 
-    PostgresSQLConnection connection = new PostgresSQLConnection();
+    private final PostgresSQLConnection connection = new PostgresSQLConnection();
 
     @Override
     public void start() {

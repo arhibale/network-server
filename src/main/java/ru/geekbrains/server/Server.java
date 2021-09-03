@@ -2,6 +2,8 @@ package ru.geekbrains.server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ru.geekbrains.server.config.Commands;
+import ru.geekbrains.server.handlers.ClientHandler;
 import ru.geekbrains.server.service.AuthService;
 import ru.geekbrains.server.service.BaseAuthService;
 
@@ -64,7 +66,7 @@ public class Server {
     private void scannerIsStop() {
         Scanner scanner = new Scanner(System.in);
         String str = scanner.nextLine();
-        if (str.equals("/end")) {
+        if (str.equals("/" + Commands.END)) {
             stopServer();
         }
         scanner.close();
@@ -73,7 +75,7 @@ public class Server {
     public void stopServer() {
         singleService.shutdown();
         isActive = false;
-        broadcastMsg("/end");
+        broadcastMsg("/" + Commands.END);
     }
 
     public synchronized void unsubscribe(ClientHandler clientHandler) {
@@ -105,7 +107,7 @@ public class Server {
     }
 
     public synchronized void broadcastClientList() {
-        StringBuilder builder = new StringBuilder("/clients");
+        StringBuilder builder = new StringBuilder("/" + Commands.CLIENTS);
         for (ClientHandler clientHandler : clients) {
             builder.append(clientHandler.getName()).append(":");
         }
